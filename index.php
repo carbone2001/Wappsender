@@ -1,4 +1,5 @@
 <?php
+// { data: { reason: "...", notification: { number:"+54..." , message: "..." } } }
 $data = json_decode($_POST['data']);
 
 switch($data->reason)
@@ -14,9 +15,12 @@ switch($data->reason)
     case 'add':
         $notificationsFile = fopen("pending_notifications.json", "r") or die("Read Error!");
         $notifications = json_decode(fread($notificationsFile,filesize("pending_notifications.json")));
-        fclose($notificationsFile);
         if($data->notification != null)
         {
+            if($notifications == null)
+            {
+                $notifications = json_decode("[]");
+            }
             array_push($notifications,$data->notification);
             $notificationsFile = fopen("pending_notifications.json", "w") or die("Write Error!");
             fwrite($notificationsFile,json_encode($notifications));
@@ -36,10 +40,20 @@ switch($data->reason)
         {
             if($data->notification->number != null)
             {
-                $notifications = array_filter($notifications,function($var) {
-                    $data = json_decode($_POST['data']);
-                    return strcmp($var->number,$data->notification->number) != 0;
-                });
+                $newNotifications = json_decode("[]");
+                foreach($notifications as $value)
+                {
+                    
+                    if(strcmp($value->number,$data->notification->number) != 0)
+                    {
+                        array_push($newNotifications, $value);
+                    }
+                }
+                $notifications = $newNotifications;
+                // $notifications = array_filter($notifications,function($var) {
+                //     $data = json_decode($_POST['data']);
+                //     return strcmp($var->number,$data->notification->number) != 0;
+                // });
                 $notificationsFile = fopen("pending_notifications.json", "w") or die("Write Error!");
                 fwrite($notificationsFile,json_encode($notifications));
                 fclose($notificationsFile);
@@ -54,6 +68,9 @@ switch($data->reason)
         {
             echo "Cannot remove a null notification";
         }
+    break;
+    case "test":
+        echo var_dump(json_decode("[]"));
     break;
     default:
         echo 'Uknown Reason';
